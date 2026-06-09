@@ -19,9 +19,7 @@
     <div class="card">
         <div class="card-body">
             @forelse($notifications as $notification)
-            <div class="notification-item {{ !$notification->is_read ? 'unread' : '' }} mb-3 p-3 border rounded" 
-                 data-id="{{ $notification->id }}" 
-                 data-transaction-id="{{ $notification->transaction_id }}">
+            <div class="notification-item {{ !$notification->is_read ? 'unread' : '' }} mb-3 p-3 border rounded" data-id="{{ $notification->id }}" data-transaction-id="{{ $notification->transaction_id }}">
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
                         <div class="d-flex align-items-center mb-2">
@@ -79,7 +77,89 @@
             </div>
             @endforelse
             
-            {{ $notifications->links() }}
+            <!-- Pagination yang lebih bagus -->
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <div class="text-muted small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Menampilkan {{ $notifications->firstItem() }} sampai {{ $notifications->lastItem() }} dari {{ $notifications->total() }} notifikasi
+                </div>
+                
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm mb-0">
+                        <!-- Previous Page -->
+                        @if ($notifications->onFirstPage())
+                            <li class="page-item disabled">
+                                <span class="page-link">
+                                    <i class="fas fa-chevron-left me-1"></i> Sebelumnya
+                                </span>
+                            </li>
+                        @else
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $notifications->previousPageUrl() }}">
+                                    <i class="fas fa-chevron-left me-1"></i> Sebelumnya
+                                </a>
+                            </li>
+                        @endif
+                        
+                        <!-- Page Numbers -->
+                        @php
+                            $currentPage = $notifications->currentPage();
+                            $lastPage = $notifications->lastPage();
+                            $start = max(1, $currentPage - 2);
+                            $end = min($lastPage, $currentPage + 2);
+                        @endphp
+                        
+                        @if ($start > 1)
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $notifications->url(1) }}">1</a>
+                            </li>
+                            @if ($start > 2)
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            @endif
+                        @endif
+                        
+                        @for ($i = $start; $i <= $end; $i++)
+                            @if ($i == $currentPage)
+                                <li class="page-item active">
+                                    <span class="page-link">{{ $i }}</span>
+                                </li>
+                            @else
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $notifications->url($i) }}">{{ $i }}</a>
+                                </li>
+                            @endif
+                        @endfor
+                        
+                        @if ($end < $lastPage)
+                            @if ($end < $lastPage - 1)
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            @endif
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $notifications->url($lastPage) }}">{{ $lastPage }}</a>
+                            </li>
+                        @endif
+                        
+                        <!-- Next Page -->
+                        @if ($notifications->hasMorePages())
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $notifications->nextPageUrl() }}">
+                                    Selanjutnya <i class="fas fa-chevron-right ms-1"></i>
+                                </a>
+                            </li>
+                        @else
+                            <li class="page-item disabled">
+                                <span class="page-link">
+                                    Selanjutnya <i class="fas fa-chevron-right ms-1"></i>
+                                </span>
+                            </li>
+                        @endif
+                    </ul>
+                </nav>
+            </div>
         </div>
     </div>
 </div>
@@ -92,14 +172,12 @@
                 <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>Detail Notifikasi</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div id="detailContent">
-                    <div class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="mt-2">Memuat data...</p>
+            <div class="modal-body" id="detailContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
                     </div>
+                    <p class="mt-2">Memuat data...</p>
                 </div>
             </div>
             <div class="modal-footer">
@@ -125,91 +203,69 @@
         border-left: 3px solid #0d6efd !important;
     }
     
-    .status-timeline {
-        display: flex;
-        justify-content: space-between;
-        margin: 20px 0;
-        position: relative;
+    /* Pagination Styles */
+    .pagination {
+        gap: 5px;
     }
     
-    .status-step {
-        text-align: center;
-        flex: 1;
-        position: relative;
-        z-index: 1;
+    .page-link {
+        border-radius: 8px !important;
+        margin: 0 2px;
+        padding: 8px 14px;
+        color: #0d6efd;
+        background-color: #fff;
+        border: 1px solid #dee2e6;
+        transition: all 0.3s ease;
     }
     
-    .status-step .step-circle {
-        width: 40px;
-        height: 40px;
-        line-height: 40px;
-        border-radius: 50%;
-        background: #e9ecef;
+    .page-link:hover {
+        background-color: #0d6efd;
+        color: white;
+        border-color: #0d6efd;
+        transform: translateY(-2px);
+    }
+    
+    .page-item.active .page-link {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+        box-shadow: 0 2px 5px rgba(13,110,253,0.3);
+    }
+    
+    .page-item.disabled .page-link {
         color: #6c757d;
-        margin: 0 auto 8px;
-        font-weight: bold;
-        font-size: 14px;
+        pointer-events: none;
+        background-color: #fff;
+        border-color: #dee2e6;
+        opacity: 0.6;
     }
     
-    .status-step.completed .step-circle {
-        background: #28a745;
+    /* Dark mode styles */
+    [data-bs-theme="dark"] .page-link {
+        background-color: #2d2d2d;
+        border-color: #444;
+        color: #e0e0e0;
+    }
+    
+    [data-bs-theme="dark"] .page-link:hover {
+        background-color: #0d6efd;
         color: white;
+        border-color: #0d6efd;
     }
     
-    .status-step.active .step-circle {
-        background: #007bff;
-        color: white;
-        box-shadow: 0 0 0 3px rgba(0,123,255,0.3);
+    [data-bs-theme="dark"] .page-item.active .page-link {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
     }
     
-    .status-step .step-label {
-        font-size: 12px;
-        font-weight: 500;
+    [data-bs-theme="dark"] .page-item.disabled .page-link {
+        background-color: #2d2d2d;
+        border-color: #444;
+        color: #888;
     }
     
-    .status-step.completed .step-label {
-        color: #28a745;
-    }
-    
-    .status-step.active .step-label {
-        color: #007bff;
-        font-weight: bold;
-    }
-    
-    .status-timeline:before {
-        content: '';
-        position: absolute;
-        top: 20px;
-        left: 50px;
-        right: 50px;
-        height: 2px;
-        background: #dee2e6;
-        z-index: 0;
-    }
-    
-    .payment-status {
-        padding: 10px;
-        border-radius: 5px;
-        text-align: center;
-        margin-top: 15px;
-    }
-    
-    .payment-status.paid {
-        background: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-    }
-    
-    .payment-status.unpaid {
-        background: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-    }
-    
-    .payment-status.partial {
-        background: #fff3cd;
-        color: #856404;
-        border: 1px solid #ffeeba;
+    [data-bs-theme="dark"] .notification-item:hover {
+        background-color: rgba(255,255,255,0.05);
     }
 </style>
 @endpush
@@ -307,11 +363,9 @@ function loadTransactionDetail(transactionId) {
     $('#detailModal').modal('show');
     
     $.ajax({
-        url: '{{ route("customer.transaction.detail") }}',
+        url: '/customer/transaction/detail',
         type: 'GET',
-        data: {
-            id: transactionId
-        },
+        data: { id: transactionId },
         success: function(response) {
             if(response.success) {
                 displayTransactionDetail(response.data);
@@ -336,43 +390,34 @@ function loadTransactionDetail(transactionId) {
 }
 
 function displayTransactionDetail(transaction) {
-    // Status flow
+    let statusHtml = '';
     const statuses = ['pending', 'processing', 'washing', 'drying', 'ironing', 'completed'];
     const statusLabels = {
-        'pending': 'Pending',
-        'processing': 'Processing',
-        'washing': 'Washing',
-        'drying': 'Drying',
-        'ironing': 'Ironing',
-        'completed': 'Completed'
+        'pending': 'Pending', 'processing': 'Processing', 'washing': 'Washing',
+        'drying': 'Drying', 'ironing': 'Ironing', 'completed': 'Completed'
     };
     
-    let statusHtml = '<div class="status-timeline">';
+    statusHtml = '<div class="status-timeline">';
     let foundActive = false;
-    
     for (let i = 0; i < statuses.length; i++) {
-        const status = statuses[i];
         let statusClass = '';
-        
-        if (transaction.status === status) {
+        if (transaction.status === statuses[i]) {
             statusClass = 'active';
             foundActive = true;
         } else if (foundActive) {
             statusClass = '';
-        } else if (!foundActive && transaction.status !== status) {
+        } else if (!foundActive && transaction.status !== statuses[i]) {
             statusClass = 'completed';
         }
-        
         statusHtml += `
             <div class="status-step ${statusClass}">
                 <div class="step-circle">${i + 1}</div>
-                <div class="step-label">${statusLabels[status]}</div>
+                <div class="step-label">${statusLabels[statuses[i]]}</div>
             </div>
         `;
     }
     statusHtml += '</div>';
     
-    // Payment status
     let paymentClass = '';
     let paymentText = '';
     if (transaction.payment_status === 'paid') {
@@ -389,133 +434,77 @@ function displayTransactionDetail(transaction) {
     const paymentHtml = `
         <div class="payment-status ${paymentClass}">
             <strong>Status Pembayaran: ${paymentText}</strong>
-            ${transaction.payment_status === 'paid' ? '<br><small>Pembayaran telah diverifikasi oleh admin</small>' : '<br><small>Silakan lakukan pembayaran</small>'}
         </div>
     `;
     
-    // Detail items
     let itemsHtml = '';
-    transaction.details.forEach((detail, index) => {
+    transaction.details.forEach((detail, idx) => {
+        let serviceBadge = '';
+        if (detail.service_type === 'vip') {
+            serviceBadge = '<span class="badge bg-danger">VIP</span>';
+        } else if (detail.service_type === 'express') {
+            serviceBadge = '<span class="badge bg-warning text-dark">Express</span>';
+        } else {
+            serviceBadge = '<span class="badge bg-info">Regular</span>';
+        }
+        
         itemsHtml += `
             <tr>
-                <td>${index + 1}</td>
+                <td class="text-center">${idx + 1}</td>
                 <td>${detail.laundry_item.name}</td>
-                <td>${detail.quantity} item(s)</td>
-                <td>${detail.weight} kg</td>
-                <td>Rp ${formatNumber(detail.subtotal)}</td>
+                <td class="text-center">${serviceBadge}</td>
+                <td class="text-center">${detail.quantity} item(s)</td>
+                <td class="text-center">${detail.weight} kg<\/td>
+                <td class="text-end">Rp ${formatNumber(detail.subtotal)}<\/td>
             </tr>
         `;
     });
     
     const html = `
         <div class="row">
-            <div class="col-md-6">
-                <div class="card mb-3">
-                    <div class="card-header bg-info text-white">
-                        <strong>Informasi Transaksi</strong>
-                    </div>
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-header bg-info text-white">Informasi Transaksi<\/div>
                     <div class="card-body">
                         <table class="table table-sm">
-                            <tr>
-                                <th width="120">Invoice</th>
-                                <td><strong>${transaction.invoice_number}</strong></td>
-                            </tr>
-                            <tr>
-                                <th>Tanggal Order</th>
-                                <td>${transaction.order_date_formatted}</td>
-                            </tr>
-                            <tr>
-                                <th>Estimasi Selesai</th>
-                                <td>${transaction.completion_date_formatted || '-'}</td>
-                            </tr>
-                            <tr>
-                                <th>Berat Total</th>
-                                <td>${transaction.total_weight} kg</td>
-                            </tr>
-                            <tr>
-                                <th>Grand Total</th>
-                                <td class="text-danger fw-bold">Rp ${formatNumber(transaction.grand_total)}</td>
-                            </tr>
-                        </table>
+                            <tr><th>Invoice</th><td><strong>${transaction.invoice_number}</strong></td></tr>
+                            <tr><th>Tanggal Order</th><td>${transaction.order_date_formatted}</td></tr>
+                            <tr><th>Estimasi Selesai</th><td>${transaction.completion_date_formatted || '-'}</td></tr>
+                            <tr><th>Berat Total</th><td>${transaction.total_weight} kg<\/td></tr>
+                            <tr><th>Grand Total</th><td>Rp ${formatNumber(transaction.grand_total)}<\/td></tr>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card mb-3">
-                    <div class="card-header bg-info text-white">
-                        <strong>Informasi Customer</strong>
-                    </div>
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-header bg-success text-white">Status<\/div>
                     <div class="card-body">
-                        <table class="table table-sm">
-                            <tr>
-                                <th width="120">Nama</th>
-                                <td>${transaction.customer.name}</td>
-                            </tr>
-                            <tr>
-                                <th>Email</th>
-                                <td>${transaction.customer.email}</td>
-                            </tr>
-                            <tr>
-                                <th>Telepon</th>
-                                <td>${transaction.customer.phone}</td>
-                            </tr>
-                        </table>
+                        ${statusHtml}
+                        <div class="text-center mt-3">
+                            <span class="badge bg-${transaction.status_badge} fs-6 px-3 py-2">
+                                Status: ${transaction.status.toUpperCase()}
+                            </span>
+                        </div>
+                        ${paymentHtml}
                     </div>
                 </div>
             </div>
         </div>
-        
-        <div class="card mb-3">
-            <div class="card-header bg-success text-white">
-                <strong>Status Laundry</strong>
-            </div>
-            <div class="card-body">
-                ${statusHtml}
-                <div class="text-center mt-3">
-                    <span class="badge bg-${transaction.status_badge} fs-6 px-3 py-2">
-                        Status Saat Ini: ${transaction.status.toUpperCase()}
-                    </span>
-                </div>
-            </div>
-        </div>
-        
-        <div class="card mb-3">
-            <div class="card-header bg-warning text-dark">
-                <strong>Status Pembayaran</strong>
-            </div>
-            <div class="card-body">
-                ${paymentHtml}
-            </div>
-        </div>
-        
         <div class="card">
-            <div class="card-header bg-primary text-white">
-                <strong>Detail Item Laundry</strong>
-            </div>
-            <div class="card-body">
+            <div class="card-header bg-primary text-white">Detail Item Laundry<\/div>
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-bordered">
+                    <table class="table table-bordered mb-0">
                         <thead class="table-light">
-                            <tr>
-                                <th>No</th>
-                                <th>Item</th>
-                                <th>Jumlah</th>
-                                <th>Berat</th>
-                                <th>Subtotal</th>
-                            </tr>
+                            <tr><th>No</th><th>Item</th><th>Tipe</th><th>Jumlah</th><th>Berat</th><th>Subtotal</th></tr>
                         </thead>
-                        <tbody>
-                            ${itemsHtml}
-                        </tbody>
-                    </table>
+                        <tbody>${itemsHtml}</tbody>
+                    </div>
                 </div>
             </div>
-            ${transaction.notes ? `
-            <div class="card-footer">
-                <strong>Catatan:</strong> ${transaction.notes}
-            </div>
-            ` : ''}
         </div>
+        ${transaction.notes ? `<div class="alert alert-warning mt-3"><i class="fas fa-sticky-note me-2"></i><strong>Catatan:</strong> ${transaction.notes}</div>` : ''}
     `;
     
     $('#detailContent').html(html);
