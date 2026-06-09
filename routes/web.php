@@ -102,5 +102,7 @@ Route::middleware(['auth'])->prefix('customer')->name('customer.')->group(functi
     Route::get('/notifications', [App\Http\Controllers\Customer\NotificationController::class, 'index'])->name('notifications');
     Route::post('/notifications/mark-read', [App\Http\Controllers\Customer\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
     Route::post('/notifications/mark-all-read', [App\Http\Controllers\Customer\NotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
-    Route::get('/transaction/detail', [App\Http\Controllers\Customer\NotificationController::class, 'getTransactionDetail'])->name('customer.transaction.detail');
+    
+    // HAPUS 'customer.' prefix karena sudah ada di group
+    Route::get('/transaction/detail', [App\Http\Controllers\Customer\NotificationController::class, 'getTransactionDetail'])->name('transaction.detail');
 });
