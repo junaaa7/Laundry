@@ -24,11 +24,22 @@ class RegisterController extends Controller
     use RegistersUsers;
 
     /**
-     * Where to redirect users after registration.
+     * Redirect users after registration based on role.
      *
-     * @var string
+     * @return string
      */
-    protected $redirectTo = '/home';
+    protected function redirectPath()
+    {
+        $user = auth()->user();
+
+        if ($user && $user->role === 'admin') {
+            return '/admin/dashboard';
+        } elseif ($user && $user->role === 'karyawan') {
+            return '/karyawan/dashboard';
+        } else {
+            return '/customer/dashboard';
+        }
+    }
 
     /**
      * Create a new controller instance.
@@ -51,6 +62,9 @@ class RegisterController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'phone' => ['required', 'string', 'max:20'],
+            'role' => ['required', 'string', 'in:admin,karyawan,customer'],
+            'address' => ['required', 'string', 'max:500'],
         ]);
     }
 
@@ -65,6 +79,9 @@ class RegisterController extends Controller
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'phone' => $data['phone'],
+            'role' => $data['role'],
+            'address' => $data['address'],
         ]);
     }
 }

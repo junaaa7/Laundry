@@ -25,6 +25,23 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Route /home agar setelah register/login tidak 404
+Route::get('/home', function () {
+    if (auth()->check()) {
+        $user = auth()->user();
+
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        } elseif ($user->role === 'karyawan') {
+            return redirect()->route('karyawan.dashboard');
+        } else {
+            return redirect()->route('customer.dashboard');
+        }
+    }
+
+    return redirect()->route('login');
+})->name('home');
+
 // Auth Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
