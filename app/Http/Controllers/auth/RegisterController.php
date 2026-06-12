@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -24,22 +26,11 @@ class RegisterController extends Controller
     use RegistersUsers;
 
     /**
-     * Redirect users after registration based on role.
+     * Where to redirect users after registration.
      *
-     * @return string
+     * @var string
      */
-    protected function redirectPath()
-    {
-        $user = auth()->user();
-
-        if ($user && $user->role === 'admin') {
-            return '/admin/dashboard';
-        } elseif ($user && $user->role === 'karyawan') {
-            return '/karyawan/dashboard';
-        } else {
-            return '/customer/dashboard';
-        }
-    }
+    protected $redirectTo = '/login';
 
     /**
      * Create a new controller instance.
@@ -49,6 +40,22 @@ class RegisterController extends Controller
     public function __construct()
     {
         $this->middleware('guest');
+    }
+
+    /**
+     * Setelah register berhasil, arahkan ke halaman login.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  mixed  $user
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    protected function registered(Request $request, $user)
+    {
+        Auth::logout();
+
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login')->with('success', 'Registrasi berhasil. Silakan login menggunakan akun Anda.');
     }
 
     /**
