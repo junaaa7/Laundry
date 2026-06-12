@@ -20,11 +20,11 @@ class OrderController extends Controller
             'items' => 'required|array|min:1',
             'items.*.laundry_item_id' => 'required|exists:laundry_items,id',
             'items.*.service_type' => 'required|in:regular,express,vip',
-            'items.*.quantity' => 'required|integer|min:1',
             'items.*.weight' => 'required|numeric|min:0.1',
             'pickup_date' => 'required|date|after_or_equal:today',
             'pickup_time' => 'required|string',
             'pickup_address' => 'required|string|min:5',
+            'pickup_notes' => 'nullable|string',
             'notes' => 'nullable|string'
         ]);
 
@@ -58,16 +58,18 @@ class OrderController extends Controller
                 continue;
             }
             
-            $serviceType = $item['service_type']; // ambil service_type dari request
+            $serviceType = $item['service_type'];
             $multiplier = $priceMultiplier[$serviceType];
             $pricePerKg = $laundryItem->price_per_kg * $multiplier;
             $weight = floatval($item['weight']);
-            $quantity = intval($item['quantity']);
+
+            // Jumlah dihapus dari form customer, jadi otomatis 1
+            $quantity = 1;
             
-            $subtotal = $pricePerKg * $weight * $quantity;
+            $subtotal = $pricePerKg * $weight;
             
             $totalPrice += $subtotal;
-            $totalWeight += $weight * $quantity;
+            $totalWeight += $weight;
             
             // Update estimasi tercepat
             $days = $estimatedDays[$serviceType];
@@ -77,7 +79,7 @@ class OrderController extends Controller
             
             $itemsDetail[] = [
                 'laundry_item_id' => $item['laundry_item_id'],
-                'service_type' => $serviceType, // PASTIKAN TERSIMPAN
+                'service_type' => $serviceType,
                 'quantity' => $quantity,
                 'weight' => $weight,
                 'price' => $pricePerKg,
@@ -119,12 +121,12 @@ class OrderController extends Controller
         $transaction->notes = $request->notes;
         $transaction->save();
 
-        // Simpan detail transaksi dengan service_type
+        // Simpan detail transaksi
         foreach ($itemsDetail as $detail) {
             TransactionDetail::create([
                 'transaction_id' => $transaction->id,
                 'laundry_item_id' => $detail['laundry_item_id'],
-                'service_type' => $detail['service_type'], // PASTIKAN INI TERSIMPAN
+                'service_type' => $detail['service_type'],
                 'quantity' => $detail['quantity'],
                 'weight' => $detail['weight'],
                 'price' => $detail['price'],

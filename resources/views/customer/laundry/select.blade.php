@@ -39,7 +39,7 @@
                         
                         <div id="items-container">
                             <div class="item-row row mb-3 align-items-end">
-                                <div class="col-md-4">
+                                <div class="col-md-5">
                                     <label class="form-label">Jenis Laundry <span class="text-danger">*</span></label>
                                     <select class="form-select laundry-item" name="items[0][laundry_item_id]" required>
                                         <option value="">Pilih Item</option>
@@ -50,7 +50,8 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+
+                                <div class="col-md-4">
                                     <label class="form-label">Tipe Layanan <span class="text-danger">*</span></label>
                                     <select class="form-select service-type" name="items[0][service_type]" required>
                                         <option value="regular">🕐 Regular (3 hari) - Normal</option>
@@ -58,14 +59,12 @@
                                         <option value="vip">👑 VIP (1 hari) +100%</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2">
-                                    <label class="form-label">Jumlah <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control quantity" name="items[0][quantity]" value="1" min="1" required>
-                                </div>
+
                                 <div class="col-md-2">
                                     <label class="form-label">Berat (kg) <span class="text-danger">*</span></label>
                                     <input type="number" class="form-control weight" name="items[0][weight]" step="0.1" value="1" min="0.1" required>
                                 </div>
+
                                 <div class="col-md-1">
                                     <button type="button" class="btn btn-danger remove-item" style="display: none;">
                                         <i class="fas fa-trash"></i>
@@ -177,21 +176,18 @@
 <script>
 let itemIndex = 1;
 
-// Multiplier harga per tipe layanan
 const priceMultiplier = {
     'regular': 1.00,
     'express': 1.50,
     'vip': 2.00
 };
 
-// Estimasi hari per tipe layanan
 const estimatedDays = {
     'regular': 3,
     'express': 2,
     'vip': 1
 };
 
-// Label tipe layanan
 const serviceLabels = {
     'regular': 'Regular (3 hari)',
     'express': 'Express (2 hari)',
@@ -199,11 +195,10 @@ const serviceLabels = {
 };
 
 $(document).ready(function() {
-    // Add item row
     $('#add-item').click(function() {
         const newRow = `
             <div class="item-row row mb-3 align-items-end">
-                <div class="col-md-4">
+                <div class="col-md-5">
                     <select class="form-select laundry-item" name="items[${itemIndex}][laundry_item_id]" required>
                         <option value="">Pilih Item</option>
                         @foreach($laundryItems as $item)
@@ -213,19 +208,19 @@ $(document).ready(function() {
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3">
+
+                <div class="col-md-4">
                     <select class="form-select service-type" name="items[${itemIndex}][service_type]" required>
                         <option value="regular">🕐 Regular (3 hari) - Normal</option>
                         <option value="express">🚀 Express (2 hari) +50%</option>
                         <option value="vip">👑 VIP (1 hari) +100%</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <input type="number" class="form-control quantity" name="items[${itemIndex}][quantity]" value="1" min="1" required>
-                </div>
+
                 <div class="col-md-2">
                     <input type="number" class="form-control weight" name="items[${itemIndex}][weight]" step="0.1" value="1" min="0.1" required>
                 </div>
+
                 <div class="col-md-1">
                     <button type="button" class="btn btn-danger remove-item">
                         <i class="fas fa-trash"></i>
@@ -233,12 +228,12 @@ $(document).ready(function() {
                 </div>
             </div>
         `;
+
         $('#items-container').append(newRow);
         itemIndex++;
         updateTotal();
     });
     
-    // Remove item row
     $(document).on('click', '.remove-item', function() {
         if ($('.item-row').length > 1) {
             $(this).closest('.item-row').remove();
@@ -248,8 +243,7 @@ $(document).ready(function() {
         }
     });
     
-    // Calculate total
-    $(document).on('change', '.laundry-item, .service-type, .quantity, .weight', function() {
+    $(document).on('change keyup', '.laundry-item, .service-type, .weight', function() {
         updateTotal();
     });
     
@@ -264,15 +258,15 @@ $(document).ready(function() {
             const basePrice = select.data('price') || 0;
             const serviceType = $(this).find('.service-type').val();
             const multiplier = priceMultiplier[serviceType] || 1.00;
-            const quantity = $(this).find('.quantity').val() || 0;
-            const weight = $(this).find('.weight').val() || 0;
+            const weight = parseFloat($(this).find('.weight').val()) || 0;
             
             const priceWithMultiplier = basePrice * multiplier;
-            const itemTotal = priceWithMultiplier * quantity * weight;
+            const itemTotal = priceWithMultiplier * weight;
+
             totalPrice += itemTotal;
             
-            // Update estimasi tercepat
             const days = estimatedDays[serviceType] || 3;
+
             if (days < fastestDays) {
                 fastestDays = days;
             }
@@ -284,7 +278,6 @@ $(document).ready(function() {
         const tax = totalPrice * 0.11;
         const grandTotal = totalPrice + tax;
         
-        // Format display
         $('#total_price').val(totalPrice);
         $('#total_price_display').text('Rp ' + formatNumber(totalPrice));
         $('#tax').val(tax);
@@ -292,8 +285,8 @@ $(document).ready(function() {
         $('#grand_total').val(grandTotal);
         $('#grand_total_display').text('Rp ' + formatNumber(grandTotal));
         
-        // Update estimasi selesai
         let estimasiHtml = '';
+
         if (hasVip) {
             estimasiHtml = '<i class="fas fa-crown text-warning me-2"></i><strong>VIP Priority</strong> - Laundry akan selesai dalam <strong>1 hari</strong> (prioritas tertinggi)';
         } else if (hasExpress) {
