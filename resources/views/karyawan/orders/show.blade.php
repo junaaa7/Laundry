@@ -21,9 +21,6 @@
                 <i class="fas fa-sync-alt me-2"></i>Update Status
             </button>
             @endif
-            <button type="button" class="btn btn-info" onclick="window.print()">
-                <i class="fas fa-print me-2"></i>Print
-            </button>
         </div>
     </div>
     
@@ -139,7 +136,7 @@
                             <td>
                                 @if($transaction->payment_method)
                                     <span class="badge bg-secondary">
-                                        {{ ucfirst($transaction->payment_method) }}
+                                        {{ ucfirst(str_replace('_', ' ', $transaction->payment_method)) }}
                                     </span>
                                 @else
                                     <span class="text-muted">Belum dipilih</span>
@@ -245,39 +242,112 @@
     </div>
     
     <!-- Bukti Pembayaran -->
-    @if(($transaction->payment_method == 'transfer' || $transaction->payment_method == 'qris') && $transaction->payment_status == 'paid')
-    <div class="card mb-4">
+    @if(in_array($transaction->payment_method, ['transfer', 'bank_transfer', 'qris']) || $transaction->payment_proof)
+    <div class="card mb-4 payment-proof-card">
         <div class="card-header bg-info text-white">
-            <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Bukti Pembayaran</h5>
+            <h5 class="mb-0">
+                <i class="fas fa-receipt me-2"></i>Bukti Pembayaran
+            </h5>
         </div>
+
         <div class="card-body">
             @if($transaction->payment_proof)
-                <div class="row">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">File Bukti Pembayaran:</label>
-                        <div class="mt-2">
-                            <a href="{{ route('karyawan.orders.download-proof', $transaction) }}" class="btn btn-success" target="_blank">
-                                <i class="fas fa-download me-2"></i>Download Bukti Pembayaran
+                <div class="row g-4 align-items-stretch">
+                    <div class="col-lg-5">
+                        <div class="payment-proof-info h-100">
+                            <div class="proof-icon-box">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                            </div>
+
+                            <h5 class="proof-title">Bukti Pembayaran Tersedia</h5>
+
+                            <p class="proof-desc">
+                                Customer telah mengupload bukti pembayaran untuk transaksi ini.
+                                Silakan periksa gambar bukti pembayaran sebelum melanjutkan proses laundry.
+                            </p>
+
+                            <div class="proof-meta">
+                                <div class="proof-meta-item">
+                                    <span>Invoice</span>
+                                    <strong>{{ $transaction->invoice_number }}</strong>
+                                </div>
+
+                                <div class="proof-meta-item">
+                                    <span>Status Pembayaran</span>
+                                    <strong class="{{ $transaction->payment_status == 'paid' ? 'text-success' : 'text-warning' }}">
+                                        {{ ucfirst($transaction->payment_status ?? '-') }}
+                                    </strong>
+                                </div>
+
+                                <div class="proof-meta-item">
+                                    <span>Metode Pembayaran</span>
+                                    <strong>
+                                        {{ $transaction->payment_method ? ucfirst(str_replace('_', ' ', $transaction->payment_method)) : '-' }}
+                                    </strong>
+                                </div>
+
+                                <div class="proof-meta-item">
+                                    <span>Total Pembayaran</span>
+                                    <strong>
+                                        Rp {{ number_format($transaction->grand_total, 0, ',', '.') }}
+                                    </strong>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-2 mt-4">
+                                <a href="{{ route('karyawan.orders.download-proof', $transaction) }}"
+                                   class="btn btn-success"
+                                   target="_blank">
+                                    <i class="fas fa-download me-2"></i>Download Bukti
+                                </a>
+
+                                <a href="{{ route('karyawan.orders.payment-proof', $transaction) }}"
+                                   class="btn btn-outline-info"
+                                   target="_blank">
+                                    <i class="fas fa-eye me-2"></i>Lihat Full
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-7">
+                        <div class="payment-proof-preview h-100">
+                            <div class="preview-header">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-image me-2"></i>Pratinjau Bukti Pembayaran
+                                    </h6>
+                                    <small>Klik gambar untuk membuka ukuran penuh</small>
+                                </div>
+                            </div>
+
+                            <a href="{{ route('karyawan.orders.payment-proof', $transaction) }}"
+                               target="_blank"
+                               class="proof-image-link">
+                                <img
+                                    src="{{ route('karyawan.orders.payment-proof', $transaction) }}"
+                                    alt="Bukti Pembayaran"
+                                    class="proof-image"
+                                    onerror="this.style.display='none'; document.getElementById('proof-error-karyawan').style.display='block';"
+                                >
                             </a>
+
+                            <div id="proof-error-karyawan" class="alert alert-warning mt-3 mb-0" style="display: none;">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Gambar bukti pembayaran tidak dapat ditampilkan. Silakan gunakan tombol download.
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <strong>Informasi:</strong> Customer telah mengupload bukti pembayaran.
-                        </div>
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col text-center">
-                        <h6>Pratinjau Bukti Pembayaran:</h6>
-                        <img src="{{ Storage::url($transaction->payment_proof) }}" alt="Bukti Pembayaran" class="img-fluid" style="max-height: 400px; border: 1px solid #ddd; border-radius: 5px;">
                     </div>
                 </div>
             @else
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Customer belum mengupload bukti pembayaran.
+                <div class="payment-proof-empty">
+                    <div class="empty-icon">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <h5>Belum Ada Bukti Pembayaran</h5>
+                    <p class="mb-0">
+                        Customer belum mengupload bukti pembayaran untuk transaksi ini.
+                    </p>
                 </div>
             @endif
         </div>
@@ -285,79 +355,79 @@
     @endif
     
     <!-- Items Detail -->
-<div class="card mb-4">
-    <div class="card-header bg-primary text-white">
-        <h5 class="mb-0"><i class="fas fa-tshirt me-2"></i>Detail Item Laundry</h5>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead class="table-dark">
-                    <tr>
-                        <th>No</th>
-                        <th>Item Laundry</th>
-                        <th>Tipe Layanan</th>
-                        <th>Jumlah</th>
-                        <th>Berat (kg)</th>
-                        <th>Harga/kg</th>
-                        <th>Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($transaction->details as $detail)
-                    <tr>
-                        <td>{{ $loop->iteration }}</td>
-                        <td>{{ $detail->laundryItem->name }}</td>
-                        <td>
-                            @if($detail->service_type == 'vip')
-                                <span class="badge bg-danger">VIP</span>
-                            @elseif($detail->service_type == 'express')
-                                <span class="badge bg-warning text-dark">Express</span>
-                            @else
-                                <span class="badge bg-info">Regular</span>
-                            @endif
-                        </td>
-                        <td>{{ $detail->quantity }} item(s)</td>
-                        <td>{{ number_format($detail->weight, 2) }} kg</td>
-                        <td>Rp {{ number_format($detail->price, 0, ',', '.') }}</td>
-                        <td>Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="6" class="text-end fw-bold">Total Harga</td>
-                        <td class="text-end fw-bold">Rp {{ number_format($transaction->total_price, 0, ',', '.') }}</td>
-                    </tr>
-                    @if($transaction->discount > 0)
-                    <tr>
-                        <td colspan="6" class="text-end">Diskon</td>
-                        <td class="text-end">Rp {{ number_format($transaction->discount, 0, ',', '.') }}</td>
-                    </tr>
-                    @endif
-                    <tr>
-                        <td colspan="6" class="text-end">Pajak (11%)</td>
-                        <td class="text-end">Rp {{ number_format($transaction->tax, 0, ',', '.') }}</td>
-                    </tr>
-                    <tr class="table-active">
-                        <td colspan="6" class="text-end fw-bold text-danger">Grand Total</td>
-                        <td class="text-end fw-bold text-danger">Rp {{ number_format($transaction->grand_total, 0, ',', '.') }}</td>
-                    </tr>
-                    @if($transaction->payment_status != 'unpaid')
-                    <tr>
-                        <td colspan="6" class="text-end">Dibayar</td>
-                        <td class="text-end">Rp {{ number_format($transaction->paid_amount, 0, ',', '.') }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="6" class="text-end">Kembalian</td>
-                        <td class="text-end">Rp {{ number_format($transaction->change_amount, 0, ',', '.') }}</td>
-                    </tr>
-                    @endif
-                </tfoot>
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-tshirt me-2"></i>Detail Item Laundry</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle karyawan-detail-table">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Item Laundry</th>
+                            <th>Tipe Layanan</th>
+                            <th>Jumlah</th>
+                            <th>Berat (kg)</th>
+                            <th>Harga/kg</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($transaction->details as $detail)
+                        <tr>
+                            <td>{{ $loop->iteration }}</td>
+                            <td>{{ $detail->laundryItem->name }}</td>
+                            <td>
+                                @if($detail->service_type == 'vip')
+                                    <span class="badge bg-danger">VIP</span>
+                                @elseif($detail->service_type == 'express')
+                                    <span class="badge bg-warning text-dark">Express</span>
+                                @else
+                                    <span class="badge bg-info">Regular</span>
+                                @endif
+                            </td>
+                            <td>{{ $detail->quantity }} item(s)</td>
+                            <td>{{ number_format($detail->weight, 2) }} kg</td>
+                            <td>Rp {{ number_format($detail->price, 0, ',', '.') }}</td>
+                            <td>Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="6" class="text-end fw-bold">Total Harga</td>
+                            <td class="text-end fw-bold">Rp {{ number_format($transaction->total_price, 0, ',', '.') }}</td>
+                        </tr>
+                        @if($transaction->discount > 0)
+                        <tr>
+                            <td colspan="6" class="text-end">Diskon</td>
+                            <td class="text-end">Rp {{ number_format($transaction->discount, 0, ',', '.') }}</td>
+                        </tr>
+                        @endif
+                        <tr>
+                            <td colspan="6" class="text-end">Pajak (11%)</td>
+                            <td class="text-end">Rp {{ number_format($transaction->tax, 0, ',', '.') }}</td>
+                        </tr>
+                        <tr class="grand-total-row">
+                            <td colspan="6" class="text-end fw-bold">Grand Total</td>
+                            <td class="text-end fw-bold">Rp {{ number_format($transaction->grand_total, 0, ',', '.') }}</td>
+                        </tr>
+                        @if($transaction->payment_status != 'unpaid')
+                        <tr>
+                            <td colspan="6" class="text-end">Dibayar</td>
+                            <td class="text-end">Rp {{ number_format($transaction->paid_amount, 0, ',', '.') }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="6" class="text-end">Kembalian</td>
+                            <td class="text-end">Rp {{ number_format($transaction->change_amount, 0, ',', '.') }}</td>
+                        </tr>
+                        @endif
+                    </tfoot>
+                </table>
             </div>
         </div>
     </div>
-</div>
     
     <!-- Catatan -->
     @if($transaction->notes)
@@ -484,6 +554,7 @@
         position: relative;
         text-align: center;
     }
+
     .step .circle {
         width: 40px;
         height: 40px;
@@ -494,15 +565,18 @@
         margin: 0 auto 10px;
         font-weight: bold;
     }
+
     .step.completed .circle {
         background: #28a745;
         color: white;
     }
+
     .step.active .circle {
         background: #007bff;
         color: white;
         box-shadow: 0 0 0 3px rgba(0,123,255,0.3);
     }
+
     .step:not(:last-child):before {
         content: '';
         position: absolute;
@@ -513,6 +587,7 @@
         background: #ddd;
         z-index: -1;
     }
+
     .step.completed:before {
         background: #28a745;
     }
@@ -593,13 +668,186 @@
         border-radius: 5px;
     }
     
-    .pickup-address-text, .pickup-notes-text {
+    .pickup-address-text,
+    .pickup-notes-text {
         white-space: pre-wrap;
         word-wrap: break-word;
     }
+
+    /* Bukti Pembayaran */
+    .payment-proof-card {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        background: var(--bs-body-bg);
+    }
+
+    .payment-proof-info {
+        border-radius: 12px;
+        padding: 24px;
+        background: linear-gradient(135deg, rgba(13, 202, 240, 0.14), rgba(25, 135, 84, 0.10));
+        border: 1px solid rgba(13, 202, 240, 0.25);
+    }
+
+    .proof-icon-box {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(25, 135, 84, 0.16);
+        color: #20c997;
+        font-size: 26px;
+        margin-bottom: 16px;
+    }
+
+    .proof-title {
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: var(--bs-body-color);
+    }
+
+    .proof-desc {
+        color: var(--bs-secondary-color);
+        margin-bottom: 18px;
+        line-height: 1.6;
+    }
+
+    .proof-meta {
+        display: grid;
+        gap: 10px;
+    }
+
+    .proof-meta-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .proof-meta-item span {
+        color: var(--bs-secondary-color);
+        font-size: 14px;
+    }
+
+    .proof-meta-item strong {
+        color: var(--bs-body-color);
+        text-align: right;
+    }
+
+    .payment-proof-preview {
+        border-radius: 12px;
+        padding: 18px;
+        background: rgba(15, 23, 42, 0.18);
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .preview-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+        color: var(--bs-body-color);
+    }
+
+    .preview-header small {
+        color: var(--bs-secondary-color);
+    }
+
+    .proof-image-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 330px;
+        padding: 12px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px dashed rgba(148, 163, 184, 0.35);
+        text-decoration: none;
+    }
+
+    .proof-image {
+        max-width: 100%;
+        max-height: 430px;
+        object-fit: contain;
+        border-radius: 10px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .proof-image:hover {
+        transform: scale(1.015);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    .payment-proof-empty {
+        text-align: center;
+        padding: 40px 20px;
+        border-radius: 12px;
+        background: rgba(255, 193, 7, 0.10);
+        border: 1px dashed rgba(255, 193, 7, 0.45);
+        color: var(--bs-body-color);
+    }
+
+    .empty-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        margin: 0 auto 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 193, 7, 0.18);
+        color: #ffc107;
+        font-size: 28px;
+    }
+
+    /* Tabel Detail Item Laundry */
+    .karyawan-detail-table {
+        background-color: var(--bs-body-bg);
+        color: var(--bs-body-color);
+        margin-bottom: 0;
+    }
+
+    .karyawan-detail-table th,
+    .karyawan-detail-table td {
+        background-color: var(--bs-body-bg) !important;
+        color: var(--bs-body-color) !important;
+        border-color: var(--bs-border-color) !important;
+        vertical-align: middle;
+    }
+
+    .karyawan-detail-table thead th {
+        background-color: rgba(13, 110, 253, 0.10) !important;
+        color: var(--bs-body-color) !important;
+        font-weight: 700;
+    }
+
+    .karyawan-detail-table tfoot td {
+        background-color: rgba(13, 110, 253, 0.06) !important;
+        color: var(--bs-body-color) !important;
+        font-weight: 500;
+    }
+
+    .karyawan-detail-table tbody tr:hover td {
+        background-color: rgba(13, 202, 240, 0.08) !important;
+    }
+
+    .karyawan-detail-table .grand-total-row td {
+        background-color: rgba(220, 53, 69, 0.12) !important;
+        color: #dc3545 !important;
+        font-weight: 800;
+    }
     
-    /* Table styles */
-    .table td, .table th {
+    .table td,
+    .table th {
         vertical-align: middle !important;
     }
     
@@ -607,9 +855,87 @@
         font-size: 0.8rem;
         padding: 5px 10px;
     }
-    
-    tfoot td {
-        font-weight: 500;
+
+    [data-bs-theme="dark"] .payment-proof-info,
+    .dark .payment-proof-info,
+    body.dark .payment-proof-info {
+        background: linear-gradient(135deg, rgba(8, 145, 178, 0.22), rgba(22, 163, 74, 0.13));
+        border-color: rgba(34, 211, 238, 0.28);
+    }
+
+    [data-bs-theme="dark"] .payment-proof-preview,
+    .dark .payment-proof-preview,
+    body.dark .payment-proof-preview {
+        background: #111827;
+        border-color: #374151;
+    }
+
+    [data-bs-theme="dark"] .proof-image-link,
+    .dark .proof-image-link,
+    body.dark .proof-image-link {
+        background: #0f172a;
+        border-color: #334155;
+    }
+
+    [data-bs-theme="dark"] .karyawan-detail-table th,
+    [data-bs-theme="dark"] .karyawan-detail-table td,
+    .dark .karyawan-detail-table th,
+    .dark .karyawan-detail-table td,
+    body.dark .karyawan-detail-table th,
+    body.dark .karyawan-detail-table td {
+        background-color: #1f2933 !important;
+        color: #e5e7eb !important;
+        border-color: #374151 !important;
+    }
+
+    [data-bs-theme="dark"] .karyawan-detail-table thead th,
+    .dark .karyawan-detail-table thead th,
+    body.dark .karyawan-detail-table thead th {
+        background-color: #111827 !important;
+        color: #ffffff !important;
+    }
+
+    [data-bs-theme="dark"] .karyawan-detail-table tfoot td,
+    .dark .karyawan-detail-table tfoot td,
+    body.dark .karyawan-detail-table tfoot td {
+        background-color: #111827 !important;
+        color: #ffffff !important;
+    }
+
+    [data-bs-theme="dark"] .karyawan-detail-table tbody tr:hover td,
+    .dark .karyawan-detail-table tbody tr:hover td,
+    body.dark .karyawan-detail-table tbody tr:hover td {
+        background-color: #243447 !important;
+    }
+
+    [data-bs-theme="dark"] .karyawan-detail-table .grand-total-row td,
+    .dark .karyawan-detail-table .grand-total-row td,
+    body.dark .karyawan-detail-table .grand-total-row td {
+        background-color: rgba(220, 53, 69, 0.16) !important;
+        color: #ff6b7a !important;
+    }
+
+    @media (max-width: 768px) {
+        .payment-proof-info {
+            padding: 18px;
+        }
+
+        .proof-meta-item {
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .proof-meta-item strong {
+            text-align: left;
+        }
+
+        .proof-image-link {
+            min-height: 240px;
+        }
+
+        .proof-image {
+            max-height: 300px;
+        }
     }
 </style>
 @endpush

@@ -61,6 +61,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('users', App\Http\Controllers\Admin\UserController::class);
     Route::resource('transactions', App\Http\Controllers\Admin\TransactionController::class);
     Route::put('/transactions/{transaction}/status', [App\Http\Controllers\Admin\TransactionController::class, 'updateStatus'])->name('transactions.update-status');
+    Route::get('/transactions/{transaction}/payment-proof', [App\Http\Controllers\Admin\TransactionController::class, 'viewPaymentProof'])->name('transactions.payment-proof');
+    Route::get('/transactions/{transaction}/download-proof', [App\Http\Controllers\Admin\TransactionController::class, 'downloadPaymentProof'])->name('transactions.download-proof');
     Route::get('/transactions/{transaction}/download-invoice', [App\Http\Controllers\Admin\TransactionController::class, 'downloadInvoice'])->name('transactions.download-invoice');
     Route::get('/finance', [App\Http\Controllers\Admin\FinanceController::class, 'index'])->name('finance');
     
@@ -96,6 +98,7 @@ Route::middleware(['auth'])->prefix('karyawan')->name('karyawan.')->group(functi
     Route::get('/orders', [App\Http\Controllers\Karyawan\OrderController::class, 'index'])->name('orders');
     Route::get('/orders/{transaction}', [App\Http\Controllers\Karyawan\OrderController::class, 'show'])->name('orders.show');
     Route::put('/orders/{transaction}/status', [App\Http\Controllers\Karyawan\OrderController::class, 'updateStatus'])->name('orders.update-status');
+    Route::get('/orders/{transaction}/payment-proof', [App\Http\Controllers\Karyawan\OrderController::class, 'viewPaymentProof'])->name('orders.payment-proof');
     Route::get('/orders/{transaction}/download-proof', [App\Http\Controllers\Karyawan\OrderController::class, 'downloadPaymentProof'])->name('orders.download-proof');
     Route::get('/orders/{transaction}/download-invoice', [App\Http\Controllers\Karyawan\OrderController::class, 'downloadInvoice'])->name('orders.download-invoice');
     Route::resource('customers', App\Http\Controllers\Karyawan\CustomerController::class);

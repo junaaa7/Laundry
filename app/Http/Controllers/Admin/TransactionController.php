@@ -9,6 +9,7 @@ use App\Models\Notification;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class TransactionController extends Controller
 {
@@ -106,6 +107,31 @@ class TransactionController extends Controller
         ]);
         
         return response()->json(['success' => true, 'message' => 'Status berhasil diupdate']);
+    }
+
+    public function viewPaymentProof(Transaction $transaction)
+    {
+        if (!$transaction->payment_proof) {
+            abort(404, 'Bukti pembayaran tidak tersedia.');
+        }
+
+        if (!Storage::disk('public')->exists($transaction->payment_proof)) {
+            abort(404, 'File bukti pembayaran tidak ditemukan.');
+        }
+
+        return response()->file(Storage::disk('public')->path($transaction->payment_proof));
+    }
+
+    public function downloadPaymentProof(Transaction $transaction)
+    {
+        if ($transaction->payment_proof && Storage::disk('public')->exists($transaction->payment_proof)) {
+            return Storage::disk('public')->download(
+                $transaction->payment_proof,
+                'bukti_pembayaran_' . $transaction->invoice_number . '.jpg'
+            );
+        }
+        
+        return redirect()->back()->with('error', 'Bukti pembayaran tidak ditemukan');
     }
 
     public function destroy(Transaction $transaction)

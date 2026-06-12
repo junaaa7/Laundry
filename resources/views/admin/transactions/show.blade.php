@@ -161,19 +161,92 @@
     
     <!-- Bukti Pembayaran -->
     @if($transaction->payment_proof)
-    <div class="card mb-4">
+    <div class="card mb-4 payment-proof-card">
         <div class="card-header bg-info text-white">
-            <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Bukti Pembayaran</h5>
+            <h5 class="mb-0">
+                <i class="fas fa-receipt me-2"></i>Bukti Pembayaran
+            </h5>
         </div>
+
         <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <a href="{{ Storage::url($transaction->payment_proof) }}" class="btn btn-success" target="_blank">
-                        <i class="fas fa-download me-2"></i>Lihat Bukti Pembayaran
-                    </a>
+            <div class="row g-4 align-items-stretch">
+                <div class="col-lg-5">
+                    <div class="payment-proof-info h-100">
+                        <div class="proof-icon-box">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+
+                        <h5 class="proof-title">Bukti Pembayaran Tersedia</h5>
+
+                        <p class="proof-desc">
+                            Customer telah mengupload bukti pembayaran untuk transaksi ini.
+                            Silakan cek gambar bukti pembayaran sebelum memproses transaksi.
+                        </p>
+
+                        <div class="proof-meta">
+                            <div class="proof-meta-item">
+                                <span>Invoice</span>
+                                <strong>{{ $transaction->invoice_number }}</strong>
+                            </div>
+
+                            <div class="proof-meta-item">
+                                <span>Status Pembayaran</span>
+                                <strong class="text-success">
+                                    {{ ucfirst($transaction->payment_status ?? '-') }}
+                                </strong>
+                            </div>
+
+                            <div class="proof-meta-item">
+                                <span>Total Pembayaran</span>
+                                <strong>
+                                    Rp {{ number_format($transaction->grand_total, 0, ',', '.') }}
+                                </strong>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 mt-4">
+                            <a href="{{ route('admin.transactions.download-proof', $transaction) }}"
+                               class="btn btn-success"
+                               target="_blank">
+                                <i class="fas fa-download me-2"></i>Download Bukti
+                            </a>
+
+                            <a href="{{ route('admin.transactions.payment-proof', $transaction) }}"
+                               class="btn btn-outline-info"
+                               target="_blank">
+                                <i class="fas fa-eye me-2"></i>Lihat Full
+                            </a>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <img src="{{ Storage::url($transaction->payment_proof) }}" alt="Bukti Pembayaran" class="img-fluid" style="max-height: 200px;">
+
+                <div class="col-lg-7">
+                    <div class="payment-proof-preview h-100">
+                        <div class="preview-header">
+                            <div>
+                                <h6 class="mb-1">
+                                    <i class="fas fa-image me-2"></i>Pratinjau Bukti Pembayaran
+                                </h6>
+                                <small>Klik gambar untuk membuka ukuran penuh</small>
+                            </div>
+                        </div>
+
+                        <a href="{{ route('admin.transactions.payment-proof', $transaction) }}"
+                           target="_blank"
+                           class="proof-image-link">
+                            <img
+                                src="{{ route('admin.transactions.payment-proof', $transaction) }}"
+                                alt="Bukti Pembayaran"
+                                class="proof-image"
+                                onerror="this.style.display='none'; document.getElementById('proof-error-admin').style.display='block';"
+                            >
+                        </a>
+
+                        <div id="proof-error-admin" class="alert alert-warning mt-3 mb-0" style="display: none;">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Gambar bukti pembayaran tidak dapat ditampilkan. Silakan gunakan tombol download.
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -187,8 +260,8 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead class="table-light">
+                <table class="table table-bordered table-hover align-middle admin-detail-table">
+                    <thead>
                         <tr>
                             <th>Item</th>
                             <th>Jumlah</th>
@@ -208,7 +281,7 @@
                         </tr>
                         @endforeach
                     </tbody>
-                    <tfoot class="table-light">
+                    <tfoot>
                         <tr>
                             <th colspan="4" class="text-end">Total Harga:</th>
                             <th>Rp {{ number_format($transaction->total_price, 0, ',', '.') }}</th>
@@ -221,7 +294,7 @@
                             <th colspan="4" class="text-end">Pajak (11%):</th>
                             <th>Rp {{ number_format($transaction->tax, 0, ',', '.') }}</th>
                         </tr>
-                        <tr class="table-active">
+                        <tr class="grand-total-row">
                             <th colspan="4" class="text-end">Grand Total:</th>
                             <th><strong>Rp {{ number_format($transaction->grand_total, 0, ',', '.') }}</strong></th>
                         </tr>
@@ -250,4 +323,236 @@
     </div>
     @endif
 </div>
+
+<style>
+    .payment-proof-card {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        background: var(--bs-body-bg);
+    }
+
+    .payment-proof-info {
+        border-radius: 12px;
+        padding: 24px;
+        background: linear-gradient(135deg, rgba(13, 202, 240, 0.14), rgba(25, 135, 84, 0.10));
+        border: 1px solid rgba(13, 202, 240, 0.25);
+    }
+
+    .proof-icon-box {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(25, 135, 84, 0.16);
+        color: #20c997;
+        font-size: 26px;
+        margin-bottom: 16px;
+    }
+
+    .proof-title {
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: var(--bs-body-color);
+    }
+
+    .proof-desc {
+        color: var(--bs-secondary-color);
+        margin-bottom: 18px;
+        line-height: 1.6;
+    }
+
+    .proof-meta {
+        display: grid;
+        gap: 10px;
+    }
+
+    .proof-meta-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .proof-meta-item span {
+        color: var(--bs-secondary-color);
+        font-size: 14px;
+    }
+
+    .proof-meta-item strong {
+        color: var(--bs-body-color);
+        text-align: right;
+    }
+
+    .payment-proof-preview {
+        border-radius: 12px;
+        padding: 18px;
+        background: rgba(15, 23, 42, 0.18);
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .preview-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+        color: var(--bs-body-color);
+    }
+
+    .preview-header small {
+        color: var(--bs-secondary-color);
+    }
+
+    .proof-image-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 330px;
+        padding: 12px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px dashed rgba(148, 163, 184, 0.35);
+        text-decoration: none;
+    }
+
+    .proof-image {
+        max-width: 100%;
+        max-height: 430px;
+        object-fit: contain;
+        border-radius: 10px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .proof-image:hover {
+        transform: scale(1.015);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    .admin-detail-table {
+        background-color: var(--bs-body-bg);
+        color: var(--bs-body-color);
+        margin-bottom: 0;
+    }
+
+    .admin-detail-table th,
+    .admin-detail-table td {
+        background-color: var(--bs-body-bg) !important;
+        color: var(--bs-body-color) !important;
+        border-color: var(--bs-border-color) !important;
+        vertical-align: middle;
+    }
+
+    .admin-detail-table thead th {
+        background-color: rgba(13, 110, 253, 0.10) !important;
+        color: var(--bs-body-color) !important;
+        font-weight: 700;
+    }
+
+    .admin-detail-table tfoot th {
+        background-color: rgba(13, 110, 253, 0.06) !important;
+        color: var(--bs-body-color) !important;
+        font-weight: 700;
+    }
+
+    .admin-detail-table tbody tr:hover td {
+        background-color: rgba(13, 202, 240, 0.08) !important;
+    }
+
+    .admin-detail-table .grand-total-row th {
+        background-color: rgba(220, 53, 69, 0.12) !important;
+        color: #dc3545 !important;
+        font-weight: 800;
+    }
+
+    [data-bs-theme="dark"] .payment-proof-info,
+    .dark .payment-proof-info,
+    body.dark .payment-proof-info {
+        background: linear-gradient(135deg, rgba(8, 145, 178, 0.22), rgba(22, 163, 74, 0.13));
+        border-color: rgba(34, 211, 238, 0.28);
+    }
+
+    [data-bs-theme="dark"] .payment-proof-preview,
+    .dark .payment-proof-preview,
+    body.dark .payment-proof-preview {
+        background: #111827;
+        border-color: #374151;
+    }
+
+    [data-bs-theme="dark"] .proof-image-link,
+    .dark .proof-image-link,
+    body.dark .proof-image-link {
+        background: #0f172a;
+        border-color: #334155;
+    }
+
+    [data-bs-theme="dark"] .admin-detail-table th,
+    [data-bs-theme="dark"] .admin-detail-table td,
+    .dark .admin-detail-table th,
+    .dark .admin-detail-table td,
+    body.dark .admin-detail-table th,
+    body.dark .admin-detail-table td {
+        background-color: #1f2933 !important;
+        color: #e5e7eb !important;
+        border-color: #374151 !important;
+    }
+
+    [data-bs-theme="dark"] .admin-detail-table thead th,
+    .dark .admin-detail-table thead th,
+    body.dark .admin-detail-table thead th {
+        background-color: #111827 !important;
+        color: #ffffff !important;
+    }
+
+    [data-bs-theme="dark"] .admin-detail-table tfoot th,
+    .dark .admin-detail-table tfoot th,
+    body.dark .admin-detail-table tfoot th {
+        background-color: #111827 !important;
+        color: #ffffff !important;
+    }
+
+    [data-bs-theme="dark"] .admin-detail-table tbody tr:hover td,
+    .dark .admin-detail-table tbody tr:hover td,
+    body.dark .admin-detail-table tbody tr:hover td {
+        background-color: #243447 !important;
+    }
+
+    [data-bs-theme="dark"] .admin-detail-table .grand-total-row th,
+    .dark .admin-detail-table .grand-total-row th,
+    body.dark .admin-detail-table .grand-total-row th {
+        background-color: rgba(220, 53, 69, 0.16) !important;
+        color: #ff6b7a !important;
+    }
+
+    @media (max-width: 768px) {
+        .payment-proof-info {
+            padding: 18px;
+        }
+
+        .proof-meta-item {
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .proof-meta-item strong {
+            text-align: left;
+        }
+
+        .proof-image-link {
+            min-height: 240px;
+        }
+
+        .proof-image {
+            max-height: 300px;
+        }
+    }
+</style>
 @endsection

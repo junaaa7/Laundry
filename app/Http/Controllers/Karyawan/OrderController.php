@@ -107,6 +107,19 @@ class OrderController extends Controller
         
         return response()->json(['success' => true]);
     }
+
+    public function viewPaymentProof(Transaction $transaction)
+    {
+        if (!$transaction->payment_proof) {
+            abort(404, 'Bukti pembayaran tidak tersedia.');
+        }
+
+        if (!Storage::disk('public')->exists($transaction->payment_proof)) {
+            abort(404, 'File bukti pembayaran tidak ditemukan.');
+        }
+
+        return response()->file(Storage::disk('public')->path($transaction->payment_proof));
+    }
     
     public function downloadPaymentProof(Transaction $transaction)
     {
