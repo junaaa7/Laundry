@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Tambah User')
+@section('title', 'Tambah Karyawan')
 
 @section('content')
 <div class="container">
@@ -8,9 +8,14 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">Tambah User Baru</h5>
+                    <h5 class="mb-0">Tambah Karyawan Baru</h5>
                 </div>
                 <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        User yang dibuat dari halaman ini otomatis memiliki role <strong>Karyawan</strong>.
+                    </div>
+
                     <form method="POST" action="{{ route('admin.users.store') }}">
                         @csrf
                         
@@ -48,27 +53,13 @@
                             </div>
                         </div>
                         
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="phone" class="form-label">No. Telepon <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('phone') is-invalid @enderror" 
-                                       id="phone" name="phone" value="{{ old('phone') }}" required>
-                                @error('phone')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
-                                <select class="form-select @error('role') is-invalid @enderror" id="role" name="role" required>
-                                    <option value="admin">Admin</option>
-                                    <option value="karyawan">Karyawan</option>
-                                    <option value="customer">Customer</option>
-                                </select>
-                                @error('role')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">No. Telepon <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control @error('phone') is-invalid @enderror" 
+                                   id="phone" name="phone" value="{{ old('phone') }}" required>
+                            @error('phone')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                         
                         <div class="mb-3">
@@ -85,7 +76,7 @@
                                 <i class="fas fa-arrow-left me-2"></i>Kembali
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>Simpan
+                                <i class="fas fa-save me-2"></i>Simpan Karyawan
                             </button>
                         </div>
                     </form>

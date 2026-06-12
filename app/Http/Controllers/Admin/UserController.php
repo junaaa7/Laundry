@@ -28,7 +28,6 @@ class UserController extends Controller
             'password' => 'required|min:8|confirmed',
             'phone' => 'required|string|max:15',
             'address' => 'required|string',
-            'role' => 'required|in:admin,karyawan,customer'
         ]);
 
         User::create([
@@ -37,10 +36,10 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'phone' => $request->phone,
             'address' => $request->address,
-            'role' => $request->role
+            'role' => 'karyawan',
         ]);
 
-        return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan');
+        return redirect()->route('admin.users.index')->with('success', 'Karyawan berhasil ditambahkan');
     }
 
     public function edit(User $user)
@@ -55,13 +54,20 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'phone' => 'required|string|max:15',
             'address' => 'required|string',
-            'role' => 'required|in:admin,karyawan,customer'
         ]);
 
-        $data = $request->except('password');
+        $data = $request->only([
+            'name',
+            'email',
+            'phone',
+            'address',
+        ]);
         
         if ($request->filled('password')) {
-            $request->validate(['password' => 'min:8|confirmed']);
+            $request->validate([
+                'password' => 'min:8|confirmed',
+            ]);
+
             $data['password'] = Hash::make($request->password);
         }
 
@@ -77,6 +83,7 @@ class UserController extends Controller
         }
         
         $user->delete();
+
         return redirect()->route('admin.users.index')->with('success', 'User berhasil dihapus');
     }
 }

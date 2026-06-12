@@ -60,15 +60,9 @@
                             </div>
                             
                             <div class="col-md-6 mb-3">
-                                <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
-                                <select class="form-select @error('role') is-invalid @enderror" id="role" name="role" required>
-                                    <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Admin</option>
-                                    <option value="karyawan" {{ $user->role == 'karyawan' ? 'selected' : '' }}>Karyawan</option>
-                                    <option value="customer" {{ $user->role == 'customer' ? 'selected' : '' }}>Customer</option>
-                                </select>
-                                @error('role')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <label for="role" class="form-label">Role</label>
+                                <input type="text" class="form-control" id="role" value="{{ ucfirst($user->role) }}" disabled>
+                                <small class="text-muted">Role tidak dapat diubah dari halaman ini.</small>
                             </div>
                         </div>
                         
